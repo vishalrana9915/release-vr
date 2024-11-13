@@ -64,17 +64,32 @@ async function main() {
       default: "TICKET-123 TICKET-234",
     },
     {
-      type: "confirm",
-      name: "confirm",
-      message: "Does the above information look correct?",
-      default: true,
-    },
-    {
       type: "list",
       name: "service",
       message: "Which service are you using?",
       choices: ["GITHUB", "BITBUCKET", "GITLAB"],
       default: "GITHUB",
+    },
+    {
+      type: "list",
+      name: "commitOrderPreference",
+      message: "Choose the order for cherry-picking commits:",
+      choices: [
+        {
+          name: "Order by Tags (process commits for each tag sequentially)",
+          value: "tagOrder",
+        },
+        {
+          name: "Order by Timestamp (process commits in chronological order)",
+          value: "timestampOrder",
+        },
+      ],
+    },
+    {
+      type: "confirm",
+      name: "confirm",
+      message: "Does the above information look correct?",
+      default: true,
     },
   ]);
 

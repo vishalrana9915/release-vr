@@ -99,3 +99,15 @@ A CLI tool designed to streamline cherry-pick workflows and automate release pro
 ### Updated
 
 - **PACKAGE** : Removed reference of chalk module as not being used.
+
+## [1.0.4] - 2024-11-13
+
+### Added
+
+- **Tag Ordering Option**: Added the option to cherry-pick commits in either **serial order by tags** or **timestamp-based order**. This provides flexibility in handling multiple features with minimal conflict risk.
+  - **Serial Order**: Commits are cherry-picked by tag groups, finishing one tag before moving to the next. Useful when tags are self-contained or ordered by priority.
+  - **Timestamp Order**: Commits across tags are ordered chronologically, enabling smoother integration when features have interdependencies.
+
+### Updated
+
+- **Progress Bar Improvement**: Enhanced the progress bar to increment reliably and reach exactly 100% upon completion, providing clearer visual feedback on the cherry-pick process.

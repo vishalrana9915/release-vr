@@ -86,12 +86,14 @@ async function cherryPickWithConflictHandling(commitHash, parentNumber = 1) {
 }
 
 /**
- * Get all commits related to the tags
- * @param {*} tags
- * @returns {Promise<Object>}
+ * Function to get all commits for all tags and sort them based on the preference
+ * @param {*} tags , tags to search for
+ * @param {*} service , service name
+ * @param {*} commitOrderPreference , order preference
+ * @returns {Promise<Array>}
  */
-const getCommitsForTag = async (tags, service) => {
-  let obj = {};
+const getCommitsForTag = async (tags, service, commitOrderPreference) => {
+  let allCommits = [];
 
   for (let tag of tags) {
     // Prepare the grep options by including each tag
@@ -104,10 +106,14 @@ const getCommitsForTag = async (tags, service) => {
     }
 
     const match = await git.log(grepOptions);
-    obj[tag] = match?.all;
+    allCommits = [...allCommits, ...(match?.all ?? [])];
   }
 
-  return obj;
+  if (commitOrderPreference == "timestampOrder") {
+    allCommits = allCommits.sort((a, b) => new Date(a.date) - new Date(b.date));
+  }
+
+  return allCommits;
 };
 
 /**
@@ -121,6 +127,7 @@ async function initCherryPick({
   tags,
   confirm,
   service,
+  commitOrderPreference,
 }) {
   logger.info(
     `Starting cherry-pick from ${baseBranch} to ${targetBranch} for tags: ${tags.split(
@@ -129,9 +136,8 @@ async function initCherryPick({
   );
 
   let currentBranch = await git.status();
-  // console.log(currentBranch);
   currentBranch = currentBranch.current;
-  console.log("Print current branch ==>", currentBranch);
+  logger.info("Print current branch ==>", currentBranch);
   // Placeholder for actual cherry-pick logic
   // We'll expand this to identify PRs, filter based on tags, and handle conflicts.
   try {
@@ -160,8 +166,12 @@ async function initCherryPick({
     await git.pull();
 
     // get all commits related to tags
-    const tagsMappingCommit = await getCommitsForTag(tagsSplit, service);
-    console.log(tagsMappingCommit);
+    const allCommitLogs = await getCommitsForTag(
+      tagsSplit,
+      service,
+      commitOrderPreference
+    );
+    console.log(allCommitLogs);
 
     // checkout to the base branch
     await git.checkout(targetBranch);
@@ -177,27 +187,26 @@ async function initCherryPick({
     );
 
     const progressBar = createProgressBar(tagsSplit.length);
-    progressBar.start();
-    let increment = Math.floor(100 / tagsSplit.length);
-
-    for (let key of Object.keys(tagsMappingCommit)) {
-      const commits = tagsMappingCommit[key];
-      if (commits.length) {
-        for (let commit of commits) {
-          await cherryPickWithConflictHandling(commit.hash);
-          logger.info(
-            `Cherry-picking commit ${commit.hash} under ${key} done.`
-          );
-        }
-      }
-      progressBar.increment(increment);
+    progressBar.start(100, 0);
+    let increment = Math.floor(100 / allCommitLogs.length);
+    console.log(`increment ==>`, increment);
+    for (let commit of allCommitLogs) {
+      progressBar.update(increment);
+      await cherryPickWithConflictHandling(commit.hash);
+      // logger.info(`Cherry-picking commit ${commit.hash} Done.`);
     }
 
+    progressBar.update(100);
+
     progressBar.stop();
+    logger.info(
+      ` ========= Cherry-picking completed, Release branch ${releaseBranch} created. =========`
+    );
+    process.exit(0);
   } catch (err) {
-    console.log(err);
+    logger.error(err);
     await git.checkout(currentBranch);
-    await git.deleteLocalBranch(releaseBranch);
+    await git.deleteLocalBranch(releaseBranch, true);
     logger.error(
       `Please check if the release branch still exist, delete it manually.`
     );

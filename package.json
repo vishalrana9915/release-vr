@@ -1,6 +1,6 @@
 {
   "name": "release-vr",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A git release helper for making tidious work cool",
   "main": "build/vr.js",
   "scripts": {
