@@ -47,3 +47,5 @@ npm install -g release-vr
 `Target Branch`: Specify the branch where the cherry-pick commits will go (e.g., preprod). VR Release Helper will validate that this branch exists as well.
 
 `Release Branch`: Define a new branch name that will be created from the target branch where all cherry-picks will be applied (e.g., release-preprod). This name must be unique, and VR Release Helper will prompt you to choose a different name if it’s already in use.
+
+`Cherry-Pick Order`: Choose between **serial** or **timestamp-based** order for cherry-picking commits.
